@@ -496,7 +496,7 @@ svg.g text{fill:var(--ink); stroke:none; font-family:var(--font-mono); font-size
   <div class="top-in">
     <div class="brand">
       <h1>Бюро расследований систем</h1>
-      <span class="sub">ERD · BPMN · UML · DFD</span>
+      <span class="sub" id="brand-sub">ERD · BPMN · UML · DFD</span>
     </div>
     <div class="hud">
       <span class="num">раскрыто улик <b id="hud-n">0</b>/<span id="hud-t">0</span></span>
@@ -4003,6 +4003,9 @@ function glyph(kind, w){
   return s;
 }
 
+/* режим преподавателя: вкладка с методичкой видна только по ссылке с ?teacher */
+const TEACHER = /[?&]teacher\b/.test(location.search) || location.hash==='#teacher';
+
 const KEY='notation-trainer-v1';
 let store = load();
 function load(){
@@ -4850,6 +4853,7 @@ function resultNode(mod){
 let tab='theory';
 function render(){
   const mod=MODULES.find(m=>m.id===current);
+  if(tab==='teach' && !TEACHER) tab='theory';
   const stage=document.getElementById('stage');
   stage.textContent='';
   const done=mod.tasks.filter(t=>mastered(t.id)).length;
@@ -4868,7 +4872,7 @@ function render(){
         mod.exam?'Регламент':'Досье'),
       el('button',{class:'tab','aria-selected':tab==='practice','onclick':()=>{tab='practice';render();}},
         mod.exam ? 'Сдать экзамен' : 'Расследование · '+done+'/'+mod.tasks.length),
-      mod.teach? el('button',{class:'tab','aria-selected':tab==='teach','onclick':()=>{tab='teach';render();}},
+      (mod.teach && TEACHER)? el('button',{class:'tab','aria-selected':tab==='teach','onclick':()=>{tab='teach';render();}},
         'Преподавателю') : null
     ));
 
@@ -4896,6 +4900,7 @@ document.getElementById('reset').addEventListener('click',()=>{
   store={res:{}}; save(); run=null; paintHud(); render();
 });
 
+if(TEACHER) document.getElementById('brand-sub').textContent='ERD · BPMN · UML · DFD · режим преподавателя';
 paintHud(); render();
 </script>
 
