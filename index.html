@@ -27,7 +27,12 @@
   --font-display:"Bahnschrift","DIN Alternate","Segoe UI Semibold",system-ui,sans-serif;
   --font-body:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",sans-serif;
   --font-mono:"Cascadia Mono","Consolas",ui-monospace,SFMono-Regular,monospace;
-  --r:4px;
+  --r:6px;
+  /* ритм отступов */
+  --s1:6px; --s2:10px; --s3:16px; --s4:24px; --s5:34px; --s6:48px;
+  /* шкала кегля */
+  --t-xs:12px; --t-sm:13.5px; --t-md:15.5px; --t-lg:18px; --t-xl:22px;
+  --tap:48px;   /* минимальный размер тач-таргета */
 }
 @media (prefers-color-scheme: dark){
   :root{
@@ -98,10 +103,12 @@ header.top{
 .hud{display:flex; align-items:center; gap:14px}
 .hud .num{font-family:var(--font-mono); font-size:13px; color:var(--ink-2); font-variant-numeric:tabular-nums}
 .hud .num b{color:var(--ink); font-weight:600}
-.bar{width:140px; height:6px; background:var(--sunk); border:1px solid var(--line); position:relative}
-.bar i{position:absolute; inset:0 auto 0 0; background:var(--accent); display:block}
-.ghost{background:transparent; border:1px solid var(--line-2); padding:6px 12px;
-  font-family:var(--font-mono); font-size:12px; letter-spacing:.04em; border-radius:var(--r)}
+.bar{width:150px; height:8px; background:var(--sunk); border:1px solid var(--line); position:relative;
+  border-radius:20px; overflow:hidden}
+.bar i{position:absolute; inset:0 auto 0 0; background:var(--accent); display:block;
+  border-radius:20px; transition:width .4s cubic-bezier(.4,0,.2,1)}
+.ghost{background:transparent; border:1px solid var(--line-2); padding:8px 14px; min-height:38px;
+  font-family:var(--font-mono); font-size:12px; letter-spacing:.04em; border-radius:20px}
 .ghost:hover{border-color:var(--ink-2); background:var(--sheet)}
 
 .shell{display:grid; grid-template-columns:270px minmax(0,1fr); gap:30px; padding-top:26px}
@@ -115,9 +122,9 @@ header.top{
 }
 .rail-h{font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
   color:var(--ink-3); padding:0 0 8px 2px}
-.mod{display:grid; grid-template-columns:26px 1fr; gap:10px; align-items:start;
-  padding:9px 10px; border:1px solid transparent; background:transparent; text-align:left;
-  border-radius:var(--r); width:100%}
+.mod{display:grid; grid-template-columns:26px 1fr; gap:11px; align-items:start;
+  padding:11px 12px; border:1px solid transparent; background:transparent; text-align:left;
+  border-radius:var(--r); width:100%; min-height:var(--tap); transition:background .12s, border-color .12s}
 @media(max-width:940px){ .mod{width:auto; min-width:190px; flex:0 0 auto; background:var(--sheet); border-color:var(--line)} }
 .mod:hover{background:var(--sheet); border-color:var(--line)}
 .mod[aria-current="true"]{background:var(--sheet-2); border-color:var(--line-2); box-shadow:var(--shadow)}
@@ -171,17 +178,32 @@ svg.emb{margin-left:auto; flex:0 0 auto; fill:none; stroke:var(--case); stroke-w
 .node .knd{color:var(--case)}
 .fig .arrow{background:var(--thread)}
 .fig .arrow::after{border-left-color:var(--thread)}
-.tabs{display:flex; gap:0; margin-top:18px; border-bottom:1px solid var(--line)}
-.tab{background:none; border:none; border-bottom:2px solid transparent; padding:9px 2px; margin-right:22px;
+.tabs{display:flex; gap:0; margin-top:var(--s4); border-bottom:1px solid var(--line);
+  overflow-x:auto; scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:none; border:none; border-bottom:2px solid transparent; padding:12px 2px 11px;
+  margin-right:24px; white-space:nowrap; min-height:44px;
   font-family:var(--font-mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3)}
-.tab[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--accent)}
+.tab[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--case)}
 .tab:hover{color:var(--ink)}
-.body{padding:24px 26px 30px}
-@media(max-width:560px){ .sheet-head{padding:18px 16px 0} .body{padding:20px 16px 26px} }
+.body{padding:var(--s5) 26px var(--s6)}
+@media(max-width:560px){ .sheet-head{padding:18px 16px 0} .body{padding:var(--s4) 16px var(--s5)} }
 
 /* ============================================================
    ТЕОРИЯ
    ============================================================ */
+/* обстоятельства дела и развязка */
+.plot{border:1px solid var(--line); background:var(--sunk); border-left:3px solid var(--thread);
+  padding:15px 18px 17px; margin-bottom:22px; max-width:74ch; border-radius:var(--r)}
+.plot p{font-size:15.5px; line-height:1.6; color:var(--ink-2); margin-top:7px}
+.solved{border:1px solid var(--ok); background:var(--ok-soft); border-left:3px solid var(--ok);
+  padding:15px 18px 17px; margin:20px 0 24px; max-width:60ch; border-radius:var(--r);
+  animation:in .25s ease-out}
+.solved .eyebrow{color:var(--ok)}
+.solved p{font-size:15.5px; line-height:1.6; color:var(--ink-2); margin-top:7px}
+.solved.locked{border-color:var(--line); background:var(--sunk); border-left-color:var(--line-2)}
+.solved.locked .eyebrow{color:var(--ink-3)}
+
 .purpose{border:1px solid var(--line); border-top:3px solid var(--mark); background:var(--sheet-2);
   padding:16px 20px 18px; margin-bottom:26px; max-width:74ch; border-radius:var(--r)}
 .purpose .plead{font-family:var(--font-display); font-variation-settings:"wght" 700,"wdth" 87.5;
@@ -191,10 +213,13 @@ svg.emb{margin-left:auto; flex:0 0 auto; fill:none; stroke:var(--case); stroke-w
   color:var(--mark); padding:7px 0 7px; border-top:1px solid var(--line)}
 .pgrid dd{margin:0; padding:7px 0; color:var(--ink-2); font-size:14.5px; border-top:1px solid var(--line)}
 @media(max-width:560px){ .pgrid{grid-template-columns:1fr; gap:0} .pgrid dd{border-top:none; padding-top:0} }
-.theory{display:flex; flex-direction:column; gap:18px; max-width:74ch}
-.theory h3{font-size:19px; margin-top:8px}
-.theory h3::before{content:"— "; color:var(--accent)}
-.theory p{color:var(--ink-2)}
+.theory{display:flex; flex-direction:column; gap:var(--s4); max-width:70ch}
+.theory h3{font-size:var(--t-xl); margin-top:var(--s3); padding-top:var(--s3);
+  border-top:1px solid var(--line); display:flex; align-items:baseline; gap:10px}
+.theory h3:first-child{border-top:none; padding-top:0; margin-top:0}
+.theory h3::before{content:""; width:18px; height:3px; background:var(--case); flex:0 0 auto;
+  transform:translateY(-5px)}
+.theory p{color:var(--ink-2); font-size:var(--t-md); line-height:1.65}
 .theory strong{color:var(--ink); font-weight:600}
 .theory ul{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; color:var(--ink-2)}
 .theory li::marker{color:var(--accent)}
@@ -220,24 +245,28 @@ td:first-child{color:var(--ink); font-weight:600; white-space:nowrap}
    ПРАКТИКА
    ============================================================ */
 .runner{max-width:78ch}
-.run-head{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:18px}
+.run-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:var(--s4);
+  padding-bottom:var(--s3); border-bottom:1px solid var(--line)}
 .chip{font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; border:1px solid var(--line-2);
-  padding:3px 8px; color:var(--ink-2); border-radius:2px}
-.chip.kind{border-color:var(--accent); color:var(--accent)}
-.dots{display:flex; gap:3px; margin-left:auto; flex-wrap:wrap}
-.dots i{width:9px; height:9px; border:1px solid var(--line-2); display:block}
+  padding:4px 9px; color:var(--ink-2); border-radius:20px}
+.chip.kind{border-color:var(--case); color:var(--case)}
+.dots{display:flex; gap:4px; margin-left:auto; flex-wrap:wrap; max-width:60%; justify-content:flex-end}
+.dots i{width:10px; height:10px; border:1.5px solid var(--line-2); display:block; border-radius:50%;
+  transition:transform .15s, background .15s}
 .dots i.ok{background:var(--ok); border-color:var(--ok)}
 .dots i.no{background:var(--no); border-color:var(--no)}
-.dots i.now{border-color:var(--ink); box-shadow:inset 0 0 0 2px var(--sheet)}
-.q{font-size:19px; font-weight:600; line-height:1.4; margin-bottom:6px; text-wrap:balance}
-.qsub{color:var(--ink-3); font-size:14px; margin-bottom:16px}
-.opts{display:flex; flex-direction:column; gap:8px; margin-bottom:20px}
-.opt{display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border:1px solid var(--line);
-  background:var(--sheet-2); border-radius:var(--r); cursor:pointer; transition:border-color .12s, background .12s}
-.opt:hover{border-color:var(--line-2)}
-.opt input{margin:4px 0 0; accent-color:var(--accent); flex:0 0 auto}
+.dots i.now{border-color:var(--case); background:var(--case-soft); transform:scale(1.45)}
+.q{font-family:var(--font-display); font-variation-settings:"wght" 700,"wdth" 92;
+  font-size:clamp(19px,2.4vw,23px); line-height:1.3; margin-bottom:var(--s1); text-wrap:balance}
+.qsub{color:var(--ink-3); font-size:var(--t-sm); margin-bottom:var(--s3)}
+.opts{display:flex; flex-direction:column; gap:var(--s2); margin-bottom:var(--s4)}
+.opt{display:flex; gap:14px; align-items:flex-start; padding:14px 16px; min-height:var(--tap);
+  border:1px solid var(--line); background:var(--sheet-2); border-radius:var(--r); cursor:pointer;
+  transition:border-color .12s, background .12s, transform .12s; font-size:var(--t-md); line-height:1.45}
+.opt:hover{border-color:var(--case); transform:translateX(2px)}
+.opt input{margin:3px 0 0; accent-color:var(--case); flex:0 0 auto; width:19px; height:19px}
 .opt .txt{flex:1}
-.opt.sel{border-color:var(--accent); background:var(--accent-soft)}
+.opt.sel{border-color:var(--case); background:var(--case-soft); box-shadow:inset 3px 0 0 var(--case)}
 .opt.good{border-color:var(--ok); background:var(--ok-soft)}
 .opt.bad{border-color:var(--no); background:var(--no-soft)}
 .opt.locked{cursor:default}
@@ -266,22 +295,32 @@ input.fill{font:inherit; font-family:var(--font-mono); font-size:15px; padding:1
 input.fill.good{border-color:var(--ok); background:var(--ok-soft)}
 input.fill.bad{border-color:var(--no); background:var(--no-soft)}
 
-.fb{border:1px solid var(--line); border-left-width:3px; padding:14px 16px; margin-bottom:18px;
-  background:var(--sheet-2); border-radius:var(--r); animation:in .18s ease-out}
+.fb{border:1px solid var(--line); border-left-width:3px; padding:16px 18px; margin-bottom:var(--s4);
+  background:var(--sheet-2); border-radius:var(--r); animation:in .2s ease-out}
 .fb.good{border-color:var(--ok); background:var(--ok-soft)}
 .fb.bad{border-color:var(--no); background:var(--no-soft)}
-.fb .v{font-family:var(--font-display); font-variation-settings:"wght" 700,"wdth" 87.5;
-  font-size:15px; letter-spacing:.02em; margin-bottom:5px}
+.fb .v{font-family:var(--font-display); font-variation-settings:"wght" 700,"wdth" 92;
+  font-size:16px; letter-spacing:.02em; margin-bottom:var(--s1); display:flex; align-items:center; gap:9px}
+.fb .v::before{display:grid; place-items:center; width:22px; height:22px; border-radius:50%;
+  font-size:13px; font-family:var(--font-body); flex:0 0 auto}
 .fb.good .v{color:var(--ok)} .fb.bad .v{color:var(--no)}
-.fb .why{font-size:15px; color:var(--ink-2)}
+.fb.good .v::before{content:"✓"; background:var(--ok); color:var(--ok-soft)}
+.fb.bad .v::before{content:"✕"; background:var(--no); color:var(--no-soft)}
+.fb .why{font-size:var(--t-md); line-height:1.6; color:var(--ink-2)}
 .fb .why b{color:var(--ink)}
 @keyframes in{from{opacity:0; transform:translateY(-4px)} to{opacity:1; transform:none}}
 @media(prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 
-.actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-.btn{background:var(--accent); color:var(--sheet); border:1px solid var(--accent); padding:10px 20px;
-  font-family:var(--font-display); font-variation-settings:"wght" 600,"wdth" 87.5; font-size:15px;
-  letter-spacing:.02em; border-radius:var(--r)}
+.actions{display:flex; gap:var(--s2); align-items:center; flex-wrap:wrap}
+/* липкая панель действия: основная кнопка всегда под рукой */
+.runner > .actions{position:sticky; bottom:0; z-index:5; margin-top:var(--s2);
+  padding:var(--s3) 0 var(--s2);
+  background:linear-gradient(to bottom, transparent, var(--sheet) 42%)}
+.btn{background:var(--case); color:var(--sheet); border:1px solid var(--case);
+  padding:12px 24px; min-height:46px; font-family:var(--font-display);
+  font-variation-settings:"wght" 600,"wdth" 92; font-size:15.5px;
+  letter-spacing:.02em; border-radius:var(--r); transition:filter .12s, transform .1s}
+.btn:active{transform:translateY(1px)}
 @media (prefers-color-scheme: dark){ .btn{color:#0E1114} }
 :root[data-theme="dark"] .btn{color:#0E1114}
 :root[data-theme="light"] .btn{color:#F7F8F4}
@@ -324,7 +363,15 @@ input.fill.bad{border-color:var(--no); background:var(--no-soft)}
 .fignode{width:108px; flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:5px;
   padding:8px 6px; background:var(--sheet-2); border:1px solid var(--line); border-radius:var(--r)}
 .fignode .fc{font-size:11px; line-height:1.25; text-align:center; color:var(--ink-2)}
-.fignode.hl{border-color:var(--case); background:var(--case-soft)}
+.fignode.hl{border-color:var(--case); background:var(--case-soft); animation:land .35s ease-out}
+.fignode.ok{border-color:var(--ok); background:var(--ok-soft); animation:land .42s ease-out}
+.fignode.ok .fc{color:var(--ok); font-weight:600}
+.fignode.slotmini{border-style:dashed; border-color:var(--case); background:transparent; justify-content:center}
+.fignode .qm{font-family:var(--font-display); font-size:26px; color:var(--case); line-height:1}
+.scene{margin-bottom:20px}
+.sceneno{margin-top:12px; font-size:13.5px; color:var(--ink-2); border-left:2px solid var(--no);
+  padding-left:12px}
+.sceneno b{color:var(--ink)}
 
 .wdg{border:1px solid var(--line); border-top:3px solid var(--case); background:var(--sheet-2);
   border-radius:var(--r); padding:16px 18px 18px}
@@ -394,6 +441,14 @@ svg.link text.sm{fill:var(--ink-3); font-size:10.5px}
 .node.slot{border-style:dashed; border-color:var(--accent); background:var(--accent-soft);
   justify-content:center; animation:none}
 .node.slot .cap{color:var(--ink); font-weight:600}
+.node.slot.ghost{opacity:.62; border-style:dashed}
+.node.slot.ghost svg.g *{stroke:var(--case)}
+.node.slot.err{border-color:var(--no); background:var(--no-soft); animation:shake .34s}
+.node.landed{animation:land .42s ease-out}
+@keyframes land{
+  0%{transform:scale(.86); border-color:var(--ok); box-shadow:0 0 0 4px var(--ok-soft)}
+  55%{border-color:var(--ok); box-shadow:0 0 0 6px transparent}
+  100%{transform:none; box-shadow:none}}
 .arrow{align-self:center; width:22px; height:2px; background:var(--ink-3); position:relative; flex:0 0 auto}
 .arrow::after{content:""; position:absolute; right:-1px; top:-3px; border:4px solid transparent;
   border-left-color:var(--ink-3); border-right:none}
@@ -697,6 +752,10 @@ MODULES.push({
 
     {id:'BPM-12', type:'choice', q:'Задача «Отправить SMS через внешний шлюз оператора» — какой тип?',
       opts:['Ручная','Пользовательская','Сервисная','Абстрактная'],
+      scene:{cap:'Схема достроится выбранным типом задачи',
+        base:[['start','Заказ оформлен'],['task-script','Сформировать текст']],
+        tail:[['end','Клиент уведомлён']],
+        slot:'какая задача?', by:{0:'task-manual',1:'task-user',2:'task-service',3:'task'}},
       a:2, why:'Сервисная задача обозначает подключение сторонних сервисов, не относящихся к среде выполнения бизнес-процесса.'}
   ]
 });
@@ -767,10 +826,18 @@ MODULES.push({
 
     {id:'EVT-04', type:'choice', q:'На схеме «Вершки и корешки» после сбора урожая и мужик, и медведь обязательно забирают свою часть. Какой шлюз здесь нужен?',
       opts:['Эксклюзивный','Параллельный','Неэксклюзивный','Шлюз не нужен, хватит условного потока'],
+      scene:{cap:'Схема достроится тем шлюзом, который вы выберете',
+        base:[['start','Урожай собран'],['task','Разделить урожай']],
+        tail:[['task','Забрать свою часть']],
+        slot:'какой шлюз?', by:{0:'gw-xor',1:'gw-and',2:'gw-or'}},
       a:1, why:'Параллельный шлюз создаёт параллельные потоки и означает, что должны выполняться все условия — обе ветки обязательны.'},
 
     {id:'EVT-05', type:'choice', q:'Клиенту можно сообщить о готовности по телефону, в чате, по e-mail — годится любая комбинация каналов. Какой шлюз?',
       opts:['Эксклюзивный','Параллельный','Неэксклюзивный','Шлюз-таймер'],
+      scene:{cap:'Выберите вариант — схема достроится',
+        base:[['start','Заказ готов'],['task','Подготовить сообщение']],
+        tail:[['task-service','Отправить по каналу']],
+        slot:'какой шлюз?', by:{0:'gw-xor',1:'gw-and',2:'gw-or',3:'start-timer'}},
       a:2, why:'Неэксклюзивный шлюз разделяет поток на альтернативные параллельные маршруты: сработать может как один, так и несколько.'},
 
     {id:'EVT-06', type:'assign', q:'Определите тип события по описанию ситуации.',
@@ -1352,6 +1419,10 @@ MODULES.push({
 
     {id:'ACT-03', type:'choice', q:'Жирная горизонтальная черта: в неё входит один поток, а выходят два. Что это?',
       opts:['Узел соединения','Узел разделения','Точка принятия решения','Дорожка'],
+      scene:{cap:'Backend и frontend должны работать одновременно',
+        base:[['act-init','Начало'],['act-action','Поставить задачу']],
+        tail:[['act-action','Разработка backend']],
+        slot:'что поставить?', by:{0:'act-join',1:'act-fork',2:'act-decision'}},
       a:1, why:'Узел разделения показывает параллельно выполняемые потоки — например, backend и frontend работают одновременно.'},
 
     {id:'ACT-04', type:'choice', q:'После работ backend и frontend нужно развернуть сервис в тестовой среде. Какой элемент ставят перед развёртыванием?',
@@ -2221,6 +2292,10 @@ MODULES.push({
 
     {id:'DFD-03', type:'choice', q:'В нотации Йордона-Де Марко функция изображается…',
       opts:['Кругом','Прямоугольником со скруглёнными углами','Ромбом','Двумя параллельными линиями'],
+      scene:{cap:'Достройте схему функцией в нотации Йордона-Де Марко',
+        base:[['dfd-ext','Покупатель'],['dfd-flow','Данные о местах']],
+        tail:[['dfd-store','Заказы']],
+        slot:'какая фигура?', by:{0:'dfd-func',1:'dfd-func-g',2:'gw-xor',3:'dfd-store'}},
       a:0, why:'Круг — функция у Йордона-Де Марко. Прямоугольник со скруглёнными углами и полосой — у Гейна-Сарсона.'},
 
     {id:'DFD-04', type:'choice', q:'Какое утверждение о нотации Гейна-Сарсона верно?',
@@ -2384,6 +2459,10 @@ MODULES.push({
     {id:'CMP-03', type:'choice', q:'Кружок на палочке («леденец») у компонента — что это означает?',
       opts:['Компонент требует этот интерфейс для работы','Компонент предоставляет этот интерфейс другим',
             'Компонент развёрнут на отдельном сервере','Компонент содержит базу данных'],
+      scene:{cap:'Сервис бронирования публикует свой REST API',
+        base:[['cmp','Веб-приложение'],['cmp-dep','зависимость']],
+        tail:[['cmp','Сервис бронирования']],
+        slot:'что здесь?', by:{0:'cmp-req',1:'cmp-prov',2:'nd-node',3:'store'}},
       a:1, why:'Леденец — предоставляемый интерфейс: «я умею вот это». Полукруг-розетка — требуемый интерфейс: «мне нужно вот это».'},
 
     {id:'CMP-04', type:'choice', q:'Веб-приложение вызывает API сервиса бронирования. Куда направлена стрелка зависимости?',
@@ -2558,6 +2637,10 @@ MODULES.push({
     {id:'DEP-03', type:'choice', q:'Что означает пунктирная стрелка с надписью «deploy»?',
       opts:['Узлы обмениваются данными','Артефакт разворачивается на узел',
             'Компонент наследует другой компонент','Узел зависит от среды исполнения'],
+      scene:{cap:'Файл сборки нужно связать с сервером',
+        base:[['nd-artifact','booking.jar']],
+        tail:[['nd-node','Сервер приложений']],
+        slot:'какая связь?', by:{0:'nd-comm',1:'nd-deploy',2:'uc-general',3:'cmp-dep'}},
       a:1, why:'Отношение развёртывания связывает артефакт и узел: файл сборки кладётся на конкретный вычислительный ресурс.'},
 
     {id:'DEP-04', type:'choice', q:'Что обязательно подписывают у коммуникационного пути между узлами?',
@@ -3440,6 +3523,317 @@ const CASES={
   exam:['Экзамен на жетон','seal',5,
     'Двадцать пять случайных улик из всех дел. Проверка, что материал закрыт, а не просто узнан.']
 };
+/* ---------- методические указания преподавателю ---------- */
+const TEACH={
+  glossary:{goal:'Свести терминологию группы к единому словарю до того, как начнутся схемы.',
+    time:'45 минут: 15 разбор терминов, 20 практика, 10 обсуждение',
+    show:'Попросите трёх студентов независимо описать словами одну и ту же сущность из их опыта — расхождения станут очевидны сразу.',
+    ask:['Чем экземпляр отличается от сущности — приведите пример из своей работы?',
+         'Когда нужна очередь, а когда достаточно коллекции?',
+         'Приведите пример, где «роль» и «конкретный человек» — не одно и то же'],
+    mistakes:['Путают класс и объект («класс Иван Петров»)',
+              'Считают событие действием: «кофе закончился» называют шагом процесса',
+              'Называют статусом то, что на самом деле независимый признак'],
+    home:'Составить глоссарий из 15 терминов своего проекта по шаблону «термин — простыми словами — пример».'},
+
+  notations:{goal:'Научить выбирать нотацию от задачи, а не от привычки.',
+    time:'45 минут: 20 обзор семейств и C4, 15 практика, 10 разбор',
+    show:'Возьмите одну реальную задачу и покажите, как она выглядит на трёх разных уровнях C4.',
+    ask:['Кому адресована схема, которую вы рисовали последней?',
+         'На какой единственный вопрос она отвечает?',
+         'Что случится, если смешать два уровня на одном листе?'],
+    mistakes:['Начинают с инструмента, а не с вопроса',
+              'Рисуют «схему обо всём» и защищают её сложностью системы',
+              'Смешивают диалекты одной нотации на одном листе'],
+    home:'Взять свою старую схему и определить её уровень C4. Если уровней два — разделить на две схемы.'},
+
+  erd:{goal:'Научить превращать текст требований в структуру таблиц.',
+    time:'90 минут: 25 теория, 45 практика, 20 разбор кейсов',
+    show:'Откройте dbdiagram.io и соберите схему из трёх таблиц вживую, проговаривая каждое решение вслух.',
+    ask:['Почему «сумма заказа» не становится отдельной таблицей?',
+         'Чем слабая сущность отличается от сильной — на примере из вашего проекта?',
+         'Как понять, что перед вами атрибут, а не сущность?'],
+    mistakes:['Заводят таблицу на каждое поле','Забывают первичный ключ',
+              'Складывают список значений в одно поле через запятую'],
+    home:'Собрать ERD для процесса из своей предметной области: минимум 4 таблицы, одна связь N:M.'},
+
+  cardinality:{goal:'Убрать главный источник дефектов модели данных — непрочитанную связь.',
+    time:'90 минут: 20 теория и виджет, 50 практика, 20 разбор',
+    show:'Виджет «Соберите связь» на проекторе: меняйте минимум и максимум и вслух читайте получившуюся фразу.',
+    ask:['Прочитайте эту связь с двух сторон вслух',
+         'Где физически будет лежать внешний ключ и почему?',
+         'Что изменится в базе, если минимум станет нулём?'],
+    mistakes:['Говорят «один ко многим» без указания направления',
+              'Путают обязательность (минимум) с типом связи (максимум)',
+              'Кладут внешний ключ на сторону «одного»'],
+    home:'Взять 5 бизнес-правил своего проекта и записать для каждого кардинальность с двух сторон и место внешнего ключа.'},
+
+  'erd-lab':{goal:'Отработать отделение сущностей от атрибутов на живых кейсах.',
+    time:'60 минут: 10 инструктаж, 40 три кейса, 10 разбор',
+    show:'Первый кейс пройдите всей группой на проекторе, следующие два — самостоятельно.',
+    ask:['Почему этот кандидат не стал таблицей?',
+         'Какие данные принадлежат самой связи, а не её концам?',
+         'Что сломается, если убрать связующую таблицу?'],
+    mistakes:['Отмечают вычисляемые значения как сущности',
+              'Пропускают связующую таблицу при N:M',
+              'Не проверяют связь в обратную сторону'],
+    home:'Собрать схему своего проекта в dbdiagram.io и принести код на следующее занятие.'},
+
+  normal:{goal:'Объяснить, почему дублирование данных ломает систему, и когда оно допустимо.',
+    time:'60 минут: 25 теория с примерами аномалий, 25 практика, 10 разбор',
+    show:'Покажите таблицу с продублированным телефоном клиента и попросите группу найти все места, которые придётся обновить.',
+    ask:['Какая аномалия здесь возникнет: вставки, обновления или удаления?',
+         'Почему цена в позиции заказа — не нарушение?',
+         'Что нужно дописать в требования, если вы осознанно денормализуете?'],
+    mistakes:['Считают любую денормализацию ошибкой',
+              'Не различают 2НФ и 3НФ','Забывают требование о пересчёте кэш-полей'],
+    home:'Найти в своём проекте таблицу с нарушением 3НФ и предложить исправление.'},
+
+  'bpmn-base':{goal:'Научить раскладывать процесс по исполнителям и выбирать тип задачи.',
+    time:'90 минут: 30 теория и легенда фигур, 40 практика, 20 разбор',
+    show:'Разберите на доске процесс из жизни группы (например, согласование отпуска) и расставьте дорожки.',
+    ask:['Кто исполнитель этого шага и в чьей он дорожке?',
+         'Это человек в системе или система сама?',
+         'Что здесь стоит свернуть в подпроцесс?'],
+    mistakes:['Помечают действия системы как пользовательские задачи',
+              'Рисуют одну дорожку на весь процесс',
+              'Раскрывают подпроцессы прямо на основной схеме'],
+    home:'Описать в BPMN процесс своей команды: минимум две дорожки и один подпроцесс.'},
+
+  'bpmn-events':{goal:'Научить видеть в тексте требований ожидания, сроки и сбои.',
+    time:'90 минут: 30 теория, 40 практика, 20 разбор',
+    show:'Возьмите описание процесса без единого события и вместе найдите, где спрятаны таймеры и ошибки.',
+    ask:['Чего именно ждёт процесс в этой точке?',
+         'Какой шлюз здесь нужен и почему не другой?',
+         'Что произойдёт, если ответ не придёт никогда?'],
+    mistakes:['Ставят эксклюзивный шлюз там, где обе ветки обязательны',
+              'Не закрывают ветки завершающими событиями',
+              'Рисуют проверку шлюзом вместо задачи с последующим шлюзом'],
+    home:'Дополнить свою схему из прошлого занятия таймаутами и ветками ошибок.'},
+
+  'bpmn-flows':{goal:'Развести три разных смысла стрелок: управление, сообщение, данные.',
+    time:'60 минут: 20 теория, 30 практика, 10 разбор',
+    show:'Нарисуйте два пула и попросите группу определить, какой стрелкой соединять элементы между ними.',
+    ask:['Что именно передаётся по этой стрелке?',
+         'Почему здесь поток сообщений, а не поток управления?',
+         'Кто владелец этого объекта данных?'],
+    mistakes:['Соединяют пулы обычной сплошной стрелкой',
+              'Используют условный поток вместе со шлюзом',
+              'Оставляют стрелки без подписей'],
+    home:'Добавить на свою схему объекты данных и хотя бы одно хранилище.'},
+
+  'bpmn-build':{goal:'Довести выбор фигуры до автоматизма на живых кейсах.',
+    time:'60 минут: 5 инструктаж, 45 шесть кейсов, 10 разбор',
+    show:'Первый кейс соберите всей группой, комментируя каждый выбор фигуры.',
+    ask:['Почему именно эта фигура, а не соседняя?',
+         'Какое слово в тексте кейса подсказало ответ?',
+         'Что изменится, если убрать это условие из кейса?'],
+    mistakes:['Кликают наугад вместо чтения формулировки шага',
+              'Игнорируют подсказку и повторяют ту же ошибку',
+              'Путают сервисную задачу и задачу-сценарий'],
+    home:'Пройти все шесть кейсов без единой подсказки.'},
+
+  'uml-uc':{goal:'Научить формулировать сценарии от цели пользователя, а не от устройства системы.',
+    time:'60 минут: 20 теория, 30 практика, 10 разбор',
+    show:'Выпишите на доске 5 «плохих» use case из реального ТЗ и переформулируйте их вместе.',
+    ask:['Что пользователь хочет здесь получить?',
+         'Это обязательная часть сценария или необязательное дополнение?',
+         'Кто ещё может пользоваться этим сценарием?'],
+    mistakes:['Описывают внутреннюю реализацию: «записать строку в таблицу»',
+              'Путают include и extend','Забывают границы системы'],
+    home:'Составить диаграмму вариантов использования для своего продукта: минимум 6 сценариев, по одному include и extend.'},
+
+  'uml-act':{goal:'Научить описывать алгоритм без привязки к ролям.',
+    time:'60 минут: 20 теория, 30 практика, 10 разбор',
+    show:'Возьмите алгоритм расчёта скидки и разберите его на доске, отдельно проговорив параллельные ветки.',
+    ask:['Здесь выбор одной ветки или одновременная работа?',
+         'Что произойдёт с этой веткой, если проверка не пройдена?',
+         'Нужны ли здесь дорожки вообще?'],
+    mistakes:['Ставят BPMN-события вместо элементов активностей',
+              'Путают ромб и узел разделения',
+              'Забывают парный узел соединения'],
+    home:'Описать алгоритм одной функции своего продукта диаграммой активностей.'},
+
+  'uml-seq':{goal:'Снять вопросы интеграции: порядок вызовов, синхронность, запреты.',
+    time:'90 минут: 30 теория и виджет сообщений, 40 практика, 20 разбор',
+    show:'Виджет «Три типа сообщений» на проекторе, затем разбор реальной интеграции вашего проекта.',
+    ask:['Ждёт ли отправитель ответа?',
+         'Что произойдёт при таймауте этого вызова?',
+         'Какой фрейм здесь нужен: alt или opt?'],
+    mistakes:['Рисуют всё синхронным','Забывают ответные сообщения',
+              'Используют alt там, где ветка одна и необязательная'],
+    home:'Описать диаграммой последовательности одну интеграцию своего проекта, включая ошибочный сценарий.'},
+
+  'uml-build':{goal:'Закрепить различение похожих фигур соседних нотаций.',
+    time:'60 минут: 5 инструктаж, 45 восемь кейсов, 10 разбор',
+    show:'Покажите рядом начальное событие активностей и стартовое событие BPMN — разница в одной детали.',
+    ask:['Какая это нотация и почему?',
+         'Какая фигура из другой нотации здесь была бы ошибкой?',
+         'В каком порядке добавляются элементы на use case-диаграмме?'],
+    mistakes:['Ставят фигуры BPMN в диаграмму активностей',
+              'Начинают use case не с границ системы',
+              'Добавляют сообщения раньше участников'],
+    home:'Пройти кейсы по всем трём нотациям без ошибок.'},
+
+  states:{goal:'Научить писать статусную модель и таблицу переходов.',
+    time:'90 минут: 30 теория и виджет, 40 практика, 20 разбор',
+    show:'Виджет статусной модели: показывайте запреты и вместе формулируйте негативные тест-кейсы.',
+    ask:['Из каких статусов сюда можно попасть?',
+         'Что делать, если ответ не пришёл за сутки?',
+         'Это статус или независимый признак?'],
+    mistakes:['Создают статусы-омонимы без причины',
+              'Оставляют тупиковые статусы','Делают статусами независимые флаги'],
+    home:'Составить таблицу переходов для главного объекта своего проекта: строки — статусы, столбцы — события.'},
+
+  classes:{goal:'Показать, что классы вытаскиваются из требований по правилам, а не изобретаются.',
+    time:'90 минут: 35 теория и виджет класса, 40 практика, 15 разбор',
+    show:'Возьмите абзац реальных требований и подчеркните существительные и глаголы прямо на проекторе.',
+    ask:['Почему этот кандидат не стал классом?',
+         'В каком классе должен жить этот метод и почему?',
+         'Агрегация или композиция — что будет с частью при удалении целого?'],
+    mistakes:['Делают классы из бизнес-правил и единичных значений',
+              'Складывают всё в один класс-менеджер',
+              'Оставляют класс без единого метода'],
+    home:'Выделить классы из абзаца требований своего проекта и расставить между ними отношения с кратностями.'},
+
+  'to-code':{goal:'Показать судьбу схемы после передачи в разработку.',
+    time:'60 минут: 25 теория с кодом, 25 практика, 10 разбор',
+    show:'Покажите один и тот же класс на диаграмме, в коде и в виде таблицы — три представления рядом.',
+    ask:['Это поле обязательное или может быть пустым?',
+         'Что произойдёт с дочерними записями при удалении родителя?',
+         'Сумма хранится или вычисляется?'],
+    mistakes:['Считают, что каждый класс — это таблица',
+              'Не задают вопрос про каскадное удаление',
+              'Оставляют перечень статусов неполным'],
+    home:'Взять свою модель и выписать все вопросы, которые задаст по ней разработчик. Ответить на них письменно.'},
+
+  components:{goal:'Научить описывать состав системы и границы ответственности.',
+    time:'90 минут: 35 теория и виджет интерфейсов, 40 практика, 15 разбор',
+    show:'Нарисуйте архитектуру знакомого группе продукта и вместе проведите границы компонентов.',
+    ask:['Кто владеет этими данными?',
+         'Что сломается, если изменить этот контракт?',
+         'Почему это два компонента, а не один?'],
+    mistakes:['Делают компонент на каждую таблицу',
+              'Оставляют стрелки без указания контракта и протокола',
+              'Пускают интерфейс мимо контракта прямо в чужую базу'],
+    home:'Нарисовать диаграмму компонентов своего продукта с указанием протоколов на всех связях.'},
+
+  deployment:{goal:'Связать нефункциональные требования с конкретными решениями по инфраструктуре.',
+    time:'60 минут: 25 теория, 25 практика, 10 разбор',
+    show:'Возьмите требование «доступность 99,9%» и вместе превратите его в узлы и балансировщик на схеме.',
+    ask:['Что увидит пользователь, если этот узел упадёт?',
+         'Какие каналы выходят за границу защищённого контура?',
+         'Сколько экземпляров нужно и почему?'],
+    mistakes:['Смешивают компоненты и узлы на одной схеме',
+              'Оставляют коммуникационные пути без протоколов',
+              'Забывают про внешние каналы и их отказы'],
+    home:'Описать развёртывание своего сервиса: узлы, среды, артефакты, протоколы.'},
+
+  dfd:{goal:'Научить отслеживать путь данных при обследовании систем.',
+    time:'60 минут: 20 теория, 30 практика, 10 разбор',
+    show:'Возьмите поле из реального отчёта и вместе пройдите по цепочке до источника.',
+    ask:['Откуда берётся это поле?','У этой функции есть и вход, и выход?',
+         'Почему хранилище не соединено с внешней сущностью напрямую?'],
+    mistakes:['Рисуют DFD как последовательность действий во времени',
+              'Оставляют потоки без подписей',
+              'Смешивают нотации Йордона и Гейна-Сарсона на одной схеме'],
+    home:'Построить DFD для отчёта своего продукта: от внешних источников до хранилищ.'},
+
+  choose:{goal:'Закрепить переход «задача → нужная схема» и привычку самопроверки.',
+    time:'60 минут: 20 теория и чек-лист, 30 практика, 10 разбор',
+    show:'Раздайте 5 формулировок задач и попросите за минуту назвать нужную схему с обоснованием.',
+    ask:['Кому эта схема и на какой вопрос отвечает?',
+         'Где здесь негативные сценарии?',
+         'Какой пункт чек-листа она не проходит?'],
+    mistakes:['Рисуют BPMN там, где нужен алгоритм',
+              'Показывают заказчику схему уровня кода',
+              'Отдают схему только со счастливым путём'],
+    home:'Провести ревью чужой схемы по чек-листу и написать три конкретных замечания.'},
+
+  exam:{goal:'Проверить остаточные знания и составить план добора тем.',
+    time:'45 минут: 30 экзамен, 15 разбор промахов',
+    show:'После экзамена соберите список тем с промахами по всей группе и повторите две самые частые.',
+    ask:['Какая тема дала больше всего промахов?',
+         'Какие вопросы вы угадали, а не решили?',
+         'К какому делу вернётесь первым?'],
+    mistakes:['Заучивают ответы вместо понимания правил',
+              'Пропускают разбор после верного угаданного ответа',
+              'Не возвращаются к теме после промаха'],
+    home:'Пройти заново дела, из которых были промахи, и добиться 100% в каждом.'}
+};
+MODULES.forEach(m=>{ if(TEACH[m.id]) m.teach=TEACH[m.id]; });
+
+/* ---------- истории дел: обстоятельства и развязка ---------- */
+const STORY={
+  glossary:[
+    'На разборе инцидента выяснилось: разработчик неделю чинил «заявку», тестировщик проверял «обращение», а заказчик всё это время имел в виду «заказ». Три человека, три слова, один объект — и три разные реализации. Ищем, где именно разошлись понятия.',
+    'Виновных нет: просто никто не завёл словарь. Как только термины сведены в одну таблицу с примерами, спор «баг или не баг» решается за минуту.'],
+  notations:[
+    'Аналитик принёс заказчику схему на два листа: там были и пользователи, и таблицы базы, и адреса серверов. Заказчик посмотрел и попросил «объяснить словами». Разбираемся, почему схема не сработала.',
+    'Схема была не плохая — она была не на том уровне. Заказчику нужен был контекст, разработчику — компоненты. Одна схема на два вопроса не отвечает никогда.'],
+  erd:[
+    'Новый сотрудник спросил, где в системе хранится телефон клиента. Ответ искали три часа: телефон нашёлся в двух таблицах и ещё в поле «комментарий». Восстанавливаем картотеку с нуля.',
+    'Причина оказалась простой: структуру данных никто не описал до разработки. Каждый добавлял поле там, где было удобно. ERD — это опись, которая не даёт истории повториться.'],
+  cardinality:[
+    'В требованиях было написано: «клиент и заказы связаны один ко многим». Разработчик положил внешний ключ в таблицу клиентов и получил ровно один заказ на клиента. Ищем, где показания были неполными.',
+    'Фраза оказалась половиной правды: не указали направление. «Одна категория содержит 0..* товаров, один товар относится ровно к 1 категории» — и вопрос о внешнем ключе снимается сам.'],
+  'erd-lab':[
+    'На столе список из семи кандидатов в таблицы, полученный из беседы с бизнесом. Часть из них — настоящие сущности, часть — приметы, которые просто описывают другие объекты. Провести отбор.',
+    'Отсеялись вычисляемые значения и одиночные признаки. Остались объекты, о которых система действительно хранит больше одного факта, — и одна связующая таблица, без которой N:M не собирался.'],
+  normal:[
+    'Клиент сменил телефон, оператор аккуратно обновил карточку. Через неделю письмо ушло на старый номер: та же информация лежала ещё в девяноста строках таблицы заказов. Разбираемся, как данные размножились.',
+    'Дублирование было не злым умыслом, а следствием структуры. Разложили факты по таблицам — и телефон снова стал храниться ровно в одном месте.'],
+  'bpmn-base':[
+    'Заявка клиента шла восемь дней, хотя работы в ней на два часа. Каждый участник уверен, что свою часть сделал быстро. Нужно восстановить, у кого документ лежал и сколько.',
+    'Как только процесс разложили по дорожкам, стало видно: пять дней документ ждал на стыках между исполнителями. Схема не ускорила работу — она показала, где её нет.'],
+  'bpmn-events':[
+    'Заявка висит в статусе «в обработке» третьи сутки. Никто не может сказать, чего именно ждут: ответа поставщика, окончания срока или просто про неё забыли. Ищем пропавшее событие.',
+    'На схеме процесса не было ни одного таймера и ни одной ветки ошибки — только счастливый путь. Добавили ожидания и сроки, и «зависшая» заявка превратилась в описанное поведение.'],
+  'bpmn-flows':[
+    'Между двумя отделами ходили документы, письма и устные распоряжения. На схеме всё это было нарисовано одинаковыми стрелками, и теперь никто не понимает, что именно потерялось на переходе.',
+    'Стрелки развели по смыслу: управление осталось внутри пула, сообщения ушли между пулами, документы стали объектами данных. Потерялся, как выяснилось, именно документ — и у него не было владельца.'],
+  'bpmn-build':[
+    'Свидетель — заказчик — рассказывает процесс словами, быстро и без пауз. Ваша задача: собрать по рассказу схему, не перепутав фигуры. Ошибётесь — процесс на схеме поведёт себя не так, как в жизни.',
+    'Шесть кейсов собраны. Главный навык здесь не в знании фигур, а в слухе: «система сама» — сервисная задача, «если» — шлюз, «через три дня» — таймер.'],
+  'uml-uc':[
+    'Проект оценили в три месяца. На пятом всплыла функция, о которой «все знали», но которой не было ни в одном документе. Восстанавливаем полный список того, зачем к системе вообще приходят.',
+    'Оказалось, объём никто не фиксировал целиком: обсуждали по одной задаче. Диаграмма вариантов использования на одном листе показывает всё сразу — и торг об объёме становится честным.'],
+  'uml-act':[
+    'Скидка считается по-разному в трёх местах системы: на витрине, в корзине и в чеке. Каждый разработчик читал требование по-своему. Восстанавливаем единственно верный алгоритм.',
+    'Текстовое требование допускало три прочтения, потому что в нём терялись ветки. На диаграмме активностей развилки стали явными, и расхождение исчезло.'],
+  'uml-seq':[
+    'Две команды написали свою половину интеграции и встретились на тестировании. Одна ждала ответа, вторая была уверена, что отвечать не нужно. Восстанавливаем хронологию вызовов.',
+    'Разошлись в одном: синхронный вызов или асинхронный. На диаграмме последовательности это разные стрелки, и спорить было бы не о чем.'],
+  'uml-build':[
+    'На доске три незаконченные схемы по одному и тому же сценарию: алгоритм, список целей пользователя и хронология вызовов. Фигуры из разных нотаций перемешаны. Разложить по местам.',
+    'Все три собраны. Ловушка была в похожих фигурах: закрашенный круг активностей и тонкий круг BPMN, ромб решения и шлюз — соседние нотации не прощают невнимательности.'],
+  states:[
+    'В отчётности обнаружен заказ, который одновременно отменён и отгружен. Как он попал в это состояние, не знает никто: в требованиях про такой случай ничего нет. Восстанавливаем допустимые переходы.',
+    'Запрет существовал только в голове аналитика. Как только его записали в таблицу переходов, он превратился в проверку в коде и в негативный тест-кейс.'],
+  classes:[
+    'Разработчик получил постановку и спросил: «а какие тут вообще объекты?» В тексте требований их никто не выделял — предполагалось, что «и так понятно». Восстанавливаем состав фигурантов.',
+    'Классы нашлись прямо в тексте: существительные дали объекты, глаголы — методы. Осталось отсеять приметы от участников и решить, у кого какие обязанности.'],
+  'to-code':[
+    'Постановка ушла в разработку и вернулась через день с двенадцатью вопросами: обязательное ли поле, что при удалении родителя, откуда берётся сумма. Разбираемся, почему их не закрыли заранее.',
+    'Все двенадцать вопросов были предсказуемы: они возникают из любой модели данных. Аналитик, который мысленно пишет конструктор класса, ловит их до передачи в работу.'],
+  components:[
+    'Изменили формат ответа в одном сервисе — и упали два соседних, о существовании которых команда не знала. Восстанавливаем, кто к кому ходит и по какому контракту.',
+    'Карты системы просто не существовало. Диаграмма компонентов отвечает на вопрос «кого сломает это изменение» до того, как оно уедет в продуктив.'],
+  deployment:[
+    'В требованиях записана доступность 99,9%. При отказе одного сервера система легла целиком на четыре часа. Выясняем, что именно стояло за этой цифрой.',
+    'За цифрой не стояло ничего: узел был один. Требование к доступности живёт не в документе, а в схеме развёртывания — в количестве экземпляров и в балансировке.'],
+  dfd:[
+    'В управленческом отчёте появилась колонка, которой никто не заказывал, и цифры в ней не сходятся с бухгалтерией. Нужно пройти по следу данных до первоисточника.',
+    'След привёл к промежуточному хранилищу, куда две системы писали по-разному. DFD показывает происхождение данных там, где по коду это искать часами.'],
+  choose:[
+    'Аналитик потратил неделю на подробную схему, и на встрече выяснилось, что заказчику нужна была совсем другая. Разбираем, где был сделан неверный ход.',
+    'Ошибка случилась на первом шаге: выбрали инструмент раньше, чем сформулировали вопрос и адресата. Две минуты на эти два вопроса экономят неделю работы.'],
+  exam:[
+    'Двадцать пять улик из всех дел бюро, перемешанных случайным образом. Ни подсказок по теме, ни порядка — только ваши знания.',
+    'Экзамен закрыт. Смотрите на промахи не как на оценку, а как на список дел, к которым стоит вернуться.']
+};
+MODULES.forEach(m=>{ if(STORY[m.id]){ m.plot=STORY[m.id][0]; m.solved=STORY[m.id][1]; } });
+
 MODULES.forEach((m,i)=>{
   const c=CASES[m.id]; if(!c) return;
   m.caseName=c[0]; m.emblem=c[1];
@@ -3937,6 +4331,28 @@ WIDGET.iface=()=>{
   return box;
 };
 
+/* ---- методичка преподавателю ---- */
+function teachNode(mod){
+  const t=mod.teach;
+  const wrap=el('div',{class:'theory'});
+  wrap.appendChild(el('div',{class:'purpose'},
+    el('div',{class:'eyebrow'},'Цель занятия'),
+    el('p',{class:'plead'}, t.goal),
+    el('dl',{class:'pgrid'}, el('dt',{},'Тайминг'), el('dd',{}, t.time),
+      el('dt',{},'Показать'), el('dd',{}, t.show))));
+  const list=(title,items,cls)=>{
+    wrap.appendChild(el('h3',{}, title));
+    wrap.appendChild(el('ul',{class:cls||''}, items.map(x=>el('li',{html:x}))));
+  };
+  list('Вопросы группе', t.ask);
+  list('Типичные ошибки учеников', t.mistakes);
+  wrap.appendChild(el('h3',{},'Домашнее задание'));
+  wrap.appendChild(el('div',{class:'note', html:t.home}));
+  wrap.appendChild(el('div',{class:'actions', style:'margin-top:8px'},
+    el('button',{class:'btn sec', onclick:()=>{ tab='theory'; render(); }},'Вернуться к досье')));
+  return wrap;
+}
+
 /* ---- теория ---- */
 function theoryNode(blocks){
   const wrap=el('div',{class:'theory'});
@@ -4122,12 +4538,27 @@ function buildNode(t, box){
       if(n && flow) cv.appendChild(el('span',{class:'arrow'}));
       cv.appendChild(chip(t.steps[n].k, t.steps[n].cap));
     }
+    let slot=null;
     if(st.i<t.steps.length){
       if(st.i && flow) cv.appendChild(el('span',{class:'arrow'}));
-      cv.appendChild(el('div',{class:'node slot'},
-        el('span',{class:'cap'},'?'), el('span',{class:'knd'},'шаг '+(st.i+1))));
+      slot=el('div',{class:'node slot'+(st.bad?' err':'')},
+        el('span',{class:'cap'},'?'), el('span',{class:'knd'},'шаг '+(st.i+1)));
+      cv.appendChild(slot);
     }
+    if(st.i) cv.children[flow? (st.i-1)*2 : st.i-1].classList.add('landed');
     host.appendChild(cv);
+    /* примерка фигуры: наведение на палитру показывает её прямо в слоте */
+    const tryOn=(k)=>{ if(!slot) return;
+      slot.textContent=''; slot.classList.add('ghost');
+      slot.appendChild(glyph(k,46));
+      slot.appendChild(el('span',{class:'knd'}, EL[k].replace(/ \(.*\)/,'')));
+      slot.appendChild(el('span',{class:'cap'},'примерка'));
+    };
+    const tryOff=()=>{ if(!slot) return;
+      slot.textContent=''; slot.classList.remove('ghost');
+      slot.appendChild(el('span',{class:'cap'},'?'));
+      slot.appendChild(el('span',{class:'knd'},'шаг '+(st.i+1)));
+    };
 
     if(st.i>=t.steps.length){ finish(); return; }
 
@@ -4141,8 +4572,9 @@ function buildNode(t, box){
 
     const pal=el('div',{class:'pal'});
     st.pal.forEach(k=>{
-      pal.appendChild(el('button',{class:'pi'+(st.bad===k?' bad':''),
-        onclick:()=>pick(k)}, glyph(k,34), el('span',{},EL[k])));
+      pal.appendChild(el('button',{class:'pi'+(st.bad===k?' bad':''), onclick:()=>pick(k),
+        onmouseenter:()=>tryOn(k), onmouseleave:tryOff, onfocus:()=>tryOn(k), onblur:tryOff},
+        glyph(k,34), el('span',{},EL[k])));
     });
     host.appendChild(pal);
 
@@ -4217,6 +4649,44 @@ function runnerNode(mod){
   if(t.type==='choice' || t.type==='multi'){
     if(!run.state) run.state={order:shuffle(t.opts.map((o,i)=>({o,i}))), pick:new Set()};
     const {order,pick}=run.state;
+
+    /* живая сцена: схема достраивается тем вариантом, который выбран */
+    let scene=null, drawScene=null;
+    if(t.scene){
+      scene=el('div',{class:'fig scene'});
+      drawScene=(state)=>{
+        scene.textContent='';
+        scene.appendChild(el('div',{class:'figcap'}, t.scene.cap||'Как это выглядит на схеме'));
+        const row=el('div',{class:'figrow'});
+        t.scene.base.forEach(([k,c],i)=>{
+          if(i) row.appendChild(el('span',{class:'arrow'}));
+          row.appendChild(el('div',{class:'fignode'}, glyph(k,40), el('span',{class:'fc'},c)));
+        });
+        row.appendChild(el('span',{class:'arrow'}));
+        const sel=[...pick][0];
+        const shown = state==='answer' ? t.a : sel;
+        if(shown===undefined || t.scene.by[shown]===undefined){
+          row.appendChild(el('div',{class:'fignode slotmini'},
+            el('span',{class:'qm'},'?'), el('span',{class:'fc'}, t.scene.slot||'выберите вариант')));
+        } else {
+          const k=t.scene.by[shown];
+          row.appendChild(el('div',{class:'fignode'+(state==='answer'?' ok':' hl')},
+            glyph(k,40), el('span',{class:'fc'}, EL[k]||t.scene.slot)));
+        }
+        if(t.scene.tail) t.scene.tail.forEach(([k,c])=>{
+          row.appendChild(el('span',{class:'arrow'}));
+          row.appendChild(el('div',{class:'fignode'}, glyph(k,40), el('span',{class:'fc'},c)));
+        });
+        scene.appendChild(row);
+        if(state==='answer' && sel!==undefined && sel!==t.a){
+          scene.appendChild(el('div',{class:'sceneno', html:
+            'Ваш вариант — <b>'+(EL[t.scene.by[sel]]||t.opts[sel])+'</b> — на этой схеме дал бы другое поведение.'}));
+        }
+      };
+      drawScene();
+      body.appendChild(scene);
+    }
+
     const list=el('div',{class:'opts'});
     order.forEach((it,pos)=>{
       const input=el('input',{type:t.type==='choice'?'radio':'checkbox', name:'o'});
@@ -4228,6 +4698,7 @@ function runnerNode(mod){
         else { input.checked?pick.add(it.i):pick.delete(it.i); }
         lab.classList.toggle('sel', input.checked);
         hint.textContent='';
+        if(drawScene) drawScene();
       });
       lab.dataset.i=it.i;
       list.appendChild(lab);
@@ -4235,6 +4706,7 @@ function runnerNode(mod){
     body.appendChild(list);
     read=()=> pick.size? [...pick] : null;
     mark=()=>{
+      if(drawScene) drawScene('answer');
       const right = t.type==='choice'?[t.a]:t.a;
       list.querySelectorAll('.opt').forEach(n=>{
         const i=+n.dataset.i; n.classList.add('locked'); n.classList.remove('sel');
@@ -4353,6 +4825,11 @@ function resultNode(mod){
   box.appendChild(el('div',{class:'eyebrow'}, mod.exam?'Итог экзамена':'Итог по делу'));
   box.appendChild(el('div',{class:'score'}, pct+'', el('span',{},'%')));
   box.appendChild(el('div',{class:'verdict'}, 'Верно '+right+' из '+total+'. '+verdict));
+  if(mod.solved && pct>=70) box.appendChild(el('section',{class:'solved'},
+    el('div',{class:'eyebrow'},'Развязка'), el('p',{}, mod.solved)));
+  else if(mod.solved) box.appendChild(el('section',{class:'solved locked'},
+    el('div',{class:'eyebrow'},'Развязка дела'),
+    el('p',{},'Откроется, когда наберёте 70% и выше. Сейчас '+pct+'%.')));
   if(missed.length){
     box.appendChild(el('div',{class:'eyebrow'},'Нераскрытые улики'));
     box.appendChild(el('div',{class:'misslist'}, missed.map(t=>
@@ -4390,15 +4867,23 @@ function render(){
       el('button',{class:'tab','aria-selected':tab==='theory','onclick':()=>{tab='theory';render();}},
         mod.exam?'Регламент':'Досье'),
       el('button',{class:'tab','aria-selected':tab==='practice','onclick':()=>{tab='practice';render();}},
-        mod.exam ? 'Сдать экзамен' : 'Расследование · '+done+'/'+mod.tasks.length)
+        mod.exam ? 'Сдать экзамен' : 'Расследование · '+done+'/'+mod.tasks.length),
+      mod.teach? el('button',{class:'tab','aria-selected':tab==='teach','onclick':()=>{tab='teach';render();}},
+        'Преподавателю') : null
     ));
 
   const body=el('div',{class:'body'});
   if(tab==='theory'){
+    if(mod.plot) body.appendChild(el('section',{class:'plot'},
+      el('div',{class:'eyebrow'},'Обстоятельства дела'),
+      el('p',{}, mod.plot)));
     if(mod.purpose) body.appendChild(purposeNode(mod.purpose));
     body.appendChild(theoryNode(mod.theory));
     body.appendChild(el('div',{class:'actions', style:'margin-top:28px'},
-      el('button',{class:'btn', onclick:()=>{ tab='practice'; run=null; render(); }},'Перейти к практике')));
+      el('button',{class:'btn', onclick:()=>{ tab='practice'; run=null; render(); }},
+        mod.exam?'Сдать экзамен':'Начать расследование')));
+  } else if(tab==='teach'){
+    body.appendChild(teachNode(mod));
   } else {
     body.appendChild(runnerNode(mod));
   }
