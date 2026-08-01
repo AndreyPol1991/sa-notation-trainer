@@ -1,0 +1,4 @@
+node_modules/
+_check.js
+_data.js
+*.log
