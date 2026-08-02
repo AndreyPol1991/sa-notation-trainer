@@ -122,10 +122,32 @@ set null  — оставить запись,
 //  ПЕРЕЧИСЛЕНИЯ
 // ══════════════════════════════════════════════════════════════════
 
-enum booking_status  { NEW  CONFIRMED  CANCELLED  NO_SHOW  COMPLETED }
-enum payment_status  { PENDING  PAID  FAILED  REFUNDED }
-enum membership_state{ ACTIVE  FROZEN  EXPIRED }
-enum actor_type      { CLIENT  ADMIN  SYSTEM }
+enum booking_status {
+  NEW
+  CONFIRMED
+  CANCELLED
+  NO_SHOW
+  COMPLETED
+}
+
+enum payment_status {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum membership_state {
+  ACTIVE
+  FROZEN
+  EXPIRED
+}
+
+enum actor_type {
+  CLIENT
+  ADMIN
+  SYSTEM
+}
 
 // ══════════════════════════════════════════════════════════════════
 //  ЛЮДИ — синий
@@ -180,7 +202,9 @@ Table trainer_specialities [headercolor: #3B7DD8] {
   speciality_id bigint [not null]
   certified_at  date   [null, note: 'атрибут самой связи: сертификат выдан на ПАРУ']
 
-  indexes { (trainer_id, speciality_id) [pk] }
+  indexes {
+    (trainer_id, speciality_id) [pk]
+  }
   Note: 'Связующая таблица N:M со своим атрибутом'
 }
 
@@ -239,7 +263,9 @@ Table booking_status_history [headercolor: #C0392B] {
   actor       actor_type     [not null, note: 'CLIENT, ADMIN или SYSTEM']
   reason      varchar(512)   [null]
 
-  indexes { (booking_id, changed_at) }
+  indexes {
+    (booking_id, changed_at)
+  }
   Note: 'Аудит: кто, когда, из какого статуса в какой и почему'
 }
 
@@ -262,7 +288,9 @@ Table membership_prices [headercolor: #7D5BA6] {
   valid_from         date          [not null]
   valid_to           date          [null, note: 'NULL = цена действует сейчас']
 
-  indexes { (membership_type_id, valid_from) [unique] }
+  indexes {
+    (membership_type_id, valid_from) [unique]
+  }
   Note: 'История цен. Прайс меняется, прошлые значения сохраняются'
 }
 
@@ -276,7 +304,10 @@ Table memberships [headercolor: #7D5BA6] {
   starts_on          date             [not null]
   ends_on            date             [not null]
 
-  indexes { (client_id, state)  (ends_on) }
+  indexes {
+    (client_id, state)
+    (ends_on)
+  }
 }
 
 Table payments [headercolor: #7D5BA6] {
@@ -290,7 +321,10 @@ Table payments [headercolor: #7D5BA6] {
   created_at    timestamptz    [not null, default: `now()`]
   paid_at       timestamptz    [null]
 
-  indexes { (client_id, created_at)  (status) }
+  indexes {
+    (client_id, created_at)
+    (status)
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -307,7 +341,9 @@ Table notifications [headercolor: #E08A1E] {
   sent_at    timestamptz [null, note: 'NULL = ещё в очереди']
   attempts   int         [not null, default: 0]
 
-  indexes { (sent_at) }
+  indexes {
+    (sent_at)
+  }
   Note: 'Очередь. Сайт создаёт письма быстрее, чем шлюз их отправляет'
 }
 
@@ -332,7 +368,28 @@ Ref: payments.client_id > clients.id                            [delete: restric
 Ref: payments.membership_id > memberships.id                    [delete: set null]
 Ref: notifications.client_id > clients.id                       [delete: cascade]
 
-TableGroup people   { clients client_cards trainers specialities trainer_specialities }
-TableGroup schedule { halls sessions bookings booking_status_history }
-TableGroup money    { membership_types membership_prices memberships payments }
-TableGroup messaging{ notifications }
+TableGroup people {
+  clients
+  client_cards
+  trainers
+  specialities
+  trainer_specialities
+}
+
+TableGroup schedule {
+  halls
+  sessions
+  bookings
+  booking_status_history
+}
+
+TableGroup money {
+  membership_types
+  membership_prices
+  memberships
+  payments
+}
+
+TableGroup messaging {
+  notifications
+}
