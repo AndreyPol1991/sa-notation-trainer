@@ -497,6 +497,25 @@ svg.layers .ly-n{fill:var(--ink-3); font-family:var(--font-mono); font-size:10.5
 svg.layers .ly.on .ly-n{fill:var(--case)}
 svg.layers .ly-c{fill:var(--ink); font-family:var(--font-mono); font-size:11.5px}
 
+/* легенда таблиц под ERD-схемой */
+.erdleg{margin-top:var(--s4); border-top:1px solid var(--line); padding-top:var(--s3)}
+.erdleg .eyebrow{margin-bottom:9px}
+.erdleg-rows{display:flex; flex-direction:column; gap:0}
+.erdleg-row{display:grid; grid-template-columns:132px minmax(0,1fr) auto; gap:14px; align-items:baseline;
+  padding:9px 8px; background:none; border:none; border-bottom:1px solid var(--line);
+  text-align:left; border-radius:var(--r); transition:background .12s}
+.erdleg-row:last-child{border-bottom:none}
+.erdleg-row:hover{background:var(--sunk)}
+.erdleg-row.on{background:var(--case-soft); box-shadow:inset 3px 0 0 var(--case)}
+.lg-n{font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--ink)}
+.erdleg-row.on .lg-n{color:var(--case)}
+.lg-a{font-size:var(--t-sm); line-height:1.5; color:var(--ink-2)}
+.lg-f{font-family:var(--font-mono); font-size:10.5px; color:var(--ink-3); white-space:nowrap}
+@media(max-width:640px){
+  .erdleg-row{grid-template-columns:1fr auto; gap:4px 10px}
+  .lg-a{grid-column:1/-1}
+}
+
 .erdnote{margin-top:var(--s3); font-size:var(--t-sm); line-height:1.6; color:var(--ink-2);
   border-left:2px solid var(--case); padding-left:13px; min-height:38px}
 .erdnote b{color:var(--ink)}
@@ -1399,15 +1418,15 @@ MODULES.push({
     T.p('Здесь собраны все три случая сразу. Нажмите на связь — прочитаю её с двух сторон и объясню, где лежит внешний ключ.'),
     T.erdfig({cap:'Фитнес-центр: 1:1, 1:N и N:M в одной модели', w:860, h:340,
       tables:[
-        {id:'cl', n:'Client', x:6, y:20, about:'Клиент фитнес-центра.',
+        {id:'cl', n:'Client', x:6, y:20, about:'Клиент фитнес-центра: тот, кто покупает абонемент и записывается на занятия. Сильная сущность — существует сама по себе.',
          f:['id int [pk]','name varchar','phone varchar']},
         {id:'cd', n:'Card', x:6, y:190, about:'Карта постоянного покупателя. Не существует без клиента, поэтому внешний ключ лежит здесь.',
          f:['id int [pk]','client_id int [fk]','number varchar','bonus int']},
         {id:'bk', n:'Booking', x:310, y:20, about:'Связующая сущность: бронь клиента на занятие. Здесь живут дата создания и статус.',
          f:['id int [pk]','client_id int [fk]','session_id int [fk]','created_at timestamp','status varchar']},
-        {id:'se', n:'Session', x:640, y:20, about:'Занятие с временем начала и вместимостью.',
+        {id:'se', n:'Session', x:640, y:20, about:'Конкретное занятие в расписании: во сколько начинается и сколько человек вмещает. Именно на него записываются клиенты.',
          f:['id int [pk]','trainer_id int [fk]','starts_at timestamp','capacity int']},
-        {id:'tr', n:'Trainer', x:640, y:190, about:'Тренер. Один тренер ведёт много занятий.',
+        {id:'tr', n:'Trainer', x:640, y:190, about:'Тренер, который ведёт занятия. Справочник: записей мало, меняются редко, но на них ссылается всё расписание.',
          f:['id int [pk]','name varchar','speciality varchar']}
       ],
       links:[
@@ -6043,6 +6062,10 @@ function el(tag, props, ...kids){
   return n;
 }
 const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const plural = (n,one,few,many)=>{
+  const a=Math.abs(n)%100, b=a%10;
+  return n+' '+(a>10&&a<20 ? many : b===1 ? one : b>=2&&b<=4 ? few : many);
+};
 const norm = s => s.toLowerCase().trim().replace(/ё/g,'е').replace(/[«»"'.,;:()\[\]]/g,'').replace(/\s+/g,' ');
 
 /* ---- шапка ---- */
@@ -6144,27 +6167,42 @@ function erdFigNode(spec){
   host.appendChild(wrap);
   const note=el('div',{class:'erdnote', html:'Нажмите на таблицу или на связь — покажу, как это читается.'});
   host.appendChild(note);
+  /* постоянная легенда: что за таблицы вообще есть на схеме */
+  const legend=el('div',{class:'erdleg'});
+  legend.appendChild(el('div',{class:'eyebrow'},'Таблицы на схеме'));
+  const legrows=el('div',{class:'erdleg-rows'});
+  spec.tables.forEach(t=>{
+    legrows.appendChild(el('button',{class:'erdleg-row','data-id':t.id, onclick:()=>selectTable(t.id)},
+      el('span',{class:'lg-n'}, t.n),
+      el('span',{class:'lg-a'}, t.about||''),
+      el('span',{class:'lg-f'}, plural(t.f.length,'поле','поля','полей'))));
+  });
+  legend.appendChild(legrows);
+  host.insertBefore(legend, note);
+
   let sel=null;
   const HINT='Нажмите на таблицу или на связь — покажу, как это читается.';
-  const clear=()=>{ sel=null; wrap.querySelectorAll('.e-tab,.e-link').forEach(n=>n.classList.remove('on','dim')); };
-  wrap.querySelectorAll('.e-tab').forEach(g=>{
-    g.addEventListener('click',()=>{
-      const id=g.dataset.id;
-      if(sel==='t:'+id){ clear(); note.innerHTML=HINT; return; }
-      clear(); sel='t:'+id;
-      wrap.querySelectorAll('.e-tab').forEach(n=>n.classList.add(n.dataset.id===id?'on':'dim'));
-      const mine=spec.links.map((L,i)=>({L,i})).filter(x=>x.L.a===id||x.L.b===id);
-      wrap.querySelectorAll('.e-link').forEach(n=>
-        n.classList.add(mine.some(x=>x.i===+n.dataset.i)?'on':'dim'));
-      const t=spec.tables.find(x=>x.id===id);
-      note.innerHTML='<b>'+t.n+'.</b> '+(t.about||'')+(mine.length?
-        '<br>Связи: '+mine.map(x=>{
-          const other=x.L.a===id? box[x.L.b].n : box[x.L.a].n;
-          const c=x.L.a===id? x.L.cb : x.L.ca;
-          return 'одна запись «'+t.n+'» — <b>'+c+'</b> «'+other+'»';
-        }).join('; ')+'.' : '');
-    });
-  });
+  const clear=()=>{ sel=null;
+    wrap.querySelectorAll('.e-tab,.e-link').forEach(n=>n.classList.remove('on','dim'));
+    legrows.querySelectorAll('.erdleg-row').forEach(n=>n.classList.remove('on')); };
+  const selectTable=(id)=>{
+    if(sel==='t:'+id){ clear(); note.innerHTML=HINT; return; }
+    clear(); sel='t:'+id;
+    wrap.querySelectorAll('.e-tab').forEach(n=>n.classList.add(n.dataset.id===id?'on':'dim'));
+    legrows.querySelectorAll('.erdleg-row').forEach(n=>n.classList.toggle('on', n.dataset.id===id));
+    const mine=spec.links.map((L,i)=>({L,i})).filter(x=>x.L.a===id||x.L.b===id);
+    wrap.querySelectorAll('.e-link').forEach(n=>
+      n.classList.add(mine.some(x=>x.i===+n.dataset.i)?'on':'dim'));
+    const t=spec.tables.find(x=>x.id===id);
+    note.innerHTML='<b>'+t.n+'.</b> '+(t.about||'')+(mine.length?
+      '<br>Связи: '+mine.map(x=>{
+        const other=x.L.a===id? box[x.L.b].n : box[x.L.a].n;
+        const c=x.L.a===id? x.L.cb : x.L.ca;
+        return 'одна запись «'+t.n+'» — <b>'+c+'</b> «'+other+'»';
+      }).join('; ')+'.' : '');
+  };
+  wrap.querySelectorAll('.e-tab').forEach(g=>
+    g.addEventListener('click',()=>selectTable(g.dataset.id)));
   wrap.querySelectorAll('.e-link').forEach(g=>{
     g.addEventListener('click',(e)=>{ e.stopPropagation();
       const L=spec.links[+g.dataset.i];
