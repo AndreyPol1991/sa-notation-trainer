@@ -1,0 +1,338 @@
+Project fitness {
+  database_type: 'PostgreSQL'
+  Note: 'Фитнес-центр: расписание, брони, абонементы, платежи, история'
+}
+
+// ─── СТИКЕРЫ НА ПОЛОТНЕ ────────────────────────────────────────────
+// Это Note-блоки верхнего уровня. Они видны прямо на схеме,
+// их можно перетаскивать мышью и ставить рядом с нужным блоком.
+
+Note legend {
+'''
+ЛЕГЕНДА ЦВЕТОВ
+
+🟦 синий      — люди: клиенты, тренеры, справочники
+🟩 бирюзовый  — расписание: залы и занятия
+🟥 красный    — брони и их история
+🟪 фиолетовый — деньги: абонементы, цены, платежи
+🟧 оранжевый  — уведомления
+
+Иконка 📄 рядом с именем таблицы — примечание.
+Наведите на неё курсор.
+'''
+}
+
+Note about_bookings {
+'''
+ПОЧЕМУ BOOKINGS — ОТДЕЛЬНАЯ ТАБЛИЦА
+
+Клиент ходит на много занятий,
+на занятие записано много клиентов.
+Это связь многие-ко-многим, и напрямую
+в базе она не выражается.
+
+Плюс у самой связи есть данные:
+статус и дата создания. Их некуда
+положить ни в clients, ни в sessions.
+
+Отсюда и связующая таблица.
+'''
+}
+
+Note about_history {
+'''
+ЗАЧЕМ ИСТОРИЯ СТАТУСОВ
+
+В bookings.status лежит только
+ТЕКУЩЕЕ значение.
+
+На вопрос «кто и когда отменил бронь»
+ответить нечем — прошлые статусы
+затёрты.
+
+booking_status_history хранит каждый
+переход: из какого статуса в какой,
+когда, кто и почему.
+
+changed_by = NULL означает,
+что отменила система по таймауту.
+'''
+}
+
+Note about_prices {
+'''
+ИСТОРИЧНОСТЬ ЦЕН
+
+membership_prices — цена НЕ лежит
+в справочнике видов абонемента,
+потому что она меняется.
+
+valid_from / valid_to отвечают
+на вопрос «сколько это стоило в марте».
+valid_to = NULL означает «действует сейчас».
+
+А memberships.price_paid — это цена,
+зафиксированная в момент покупки.
+Подорожание прайса не должно задним
+числом переписывать проданные абонементы.
+'''
+}
+
+Note about_calculated {
+'''
+ЧЕГО ЗДЕСЬ НАМЕРЕННО НЕТ
+
+У sessions есть capacity,
+но НЕТ поля «свободных мест».
+
+Это вычисляемое значение:
+capacity минус активные брони.
+Хранить его — гарантированно
+получить расхождение.
+
+Так же нет «суммы платежей клиента»
+и «числа посещений за месяц».
+'''
+}
+
+Note about_delete {
+'''
+ПОЛИТИКИ УДАЛЕНИЯ
+
+restrict  — запретить удаление.
+            Нельзя удалить тренера,
+            за которым закреплено расписание.
+
+cascade   — удалить вместе с родителем.
+            История брони без брони
+            не имеет смысла.
+
+set null  — оставить запись,
+            обнулить ссылку.
+            Пригласивший клиент удалён —
+            приглашённый остаётся.
+
+А клиенты вообще не удаляются:
+у них есть deleted_at (мягкое удаление),
+иначе рассыплется история платежей.
+'''
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  ПЕРЕЧИСЛЕНИЯ
+// ══════════════════════════════════════════════════════════════════
+
+enum booking_status  { NEW  CONFIRMED  CANCELLED  NO_SHOW  COMPLETED }
+enum payment_status  { PENDING  PAID  FAILED  REFUNDED }
+enum membership_state{ ACTIVE  FROZEN  EXPIRED }
+enum actor_type      { CLIENT  ADMIN  SYSTEM }
+
+// ══════════════════════════════════════════════════════════════════
+//  ЛЮДИ — синий
+// ══════════════════════════════════════════════════════════════════
+
+Table clients [headercolor: #3B7DD8] {
+  id            bigserial    [pk]
+  full_name     varchar(255) [not null]
+  email         varchar(255) [not null, unique]
+  phone         varchar(32)  [note: 'varchar, а не int: иначе съест ведущий ноль и плюс']
+  birth_date    date
+  referred_by   bigint       [null, note: 'ссылка на самого себя: кто привёл этого клиента']
+  created_at    timestamptz  [not null, default: `now()`]
+  deleted_at    timestamptz  [null, note: 'мягкое удаление. NULL = клиент активен']
+
+  indexes {
+    (email) [unique]
+    (phone)
+  }
+  Note: 'Сильная сущность. Физически не удаляется: на неё ссылаются брони и платежи'
+}
+
+Table client_cards [headercolor: #3B7DD8] {
+  id            bigserial     [pk]
+  client_id     bigint        [not null, unique, note: 'unique превращает связь в 1:1']
+  number        varchar(32)   [not null, unique]
+  bonus_balance decimal(12,2) [not null, default: 0, note: 'деньги только decimal, не float']
+  issued_at     timestamptz   [not null, default: `now()`]
+
+  Note: 'Связь один к одному. Ключ здесь, потому что карта зависит от клиента, а не наоборот'
+}
+
+Table trainers [headercolor: #3B7DD8] {
+  id        bigserial    [pk]
+  full_name varchar(255) [not null]
+  hired_at  date         [not null]
+  is_active boolean      [not null, default: true]
+
+  Note: 'Справочник. Удаление запрещено: на тренера ссылается всё расписание'
+}
+
+Table specialities [headercolor: #3B7DD8] {
+  id    bigserial    [pk]
+  code  varchar(32)  [not null, unique]
+  title varchar(128) [not null]
+
+  Note: 'Справочник специализаций: йога, силовые, плавание'
+}
+
+Table trainer_specialities [headercolor: #3B7DD8] {
+  trainer_id    bigint [not null]
+  speciality_id bigint [not null]
+  certified_at  date   [null, note: 'атрибут самой связи: сертификат выдан на ПАРУ']
+
+  indexes { (trainer_id, speciality_id) [pk] }
+  Note: 'Связующая таблица N:M со своим атрибутом'
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  РАСПИСАНИЕ — бирюзовый
+// ══════════════════════════════════════════════════════════════════
+
+Table halls [headercolor: #16A085] {
+  id       bigserial    [pk]
+  title    varchar(128) [not null]
+  capacity int          [not null, note: 'физическая вместимость зала']
+}
+
+Table sessions [headercolor: #16A085] {
+  id           bigserial   [pk]
+  trainer_id   bigint      [not null]
+  hall_id      bigint      [not null]
+  starts_at    timestamptz [not null, note: 'timestamp, не строка: иначе не отсортировать']
+  duration_min int         [not null, default: 60]
+  capacity     int         [not null, note: 'может быть меньше вместимости зала']
+  is_cancelled boolean     [not null, default: false]
+
+  indexes {
+    (starts_at)
+    (trainer_id, starts_at)
+    (hall_id, starts_at) [unique, name: 'ux_hall_no_overlap']
+  }
+  Note: 'Свободные места НЕ хранятся, а считаются. Уникальный индекс запрещает два занятия в зале одновременно'
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  БРОНИ И ИСТОРИЯ — красный
+// ══════════════════════════════════════════════════════════════════
+
+Table bookings [headercolor: #C0392B] {
+  id         bigserial      [pk]
+  client_id  bigint         [not null]
+  session_id bigint         [not null]
+  status     booking_status [not null, default: 'NEW']
+  created_at timestamptz    [not null, default: `now()`]
+
+  indexes {
+    (client_id, session_id) [unique, name: 'ux_one_booking_per_session']
+    (session_id, status)
+  }
+  Note: 'Связующая сущность N:M. Уникальный индекс запрещает вторую бронь на то же занятие'
+}
+
+Table booking_status_history [headercolor: #C0392B] {
+  id          bigserial      [pk]
+  booking_id  bigint         [not null]
+  from_status booking_status [null, note: 'NULL при создании брони']
+  to_status   booking_status [not null]
+  changed_at  timestamptz    [not null, default: `now()`]
+  changed_by  bigint         [null, note: 'NULL = изменила система по таймауту']
+  actor       actor_type     [not null, note: 'CLIENT, ADMIN или SYSTEM']
+  reason      varchar(512)   [null]
+
+  indexes { (booking_id, changed_at) }
+  Note: 'Аудит: кто, когда, из какого статуса в какой и почему'
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  ДЕНЬГИ — фиолетовый
+// ══════════════════════════════════════════════════════════════════
+
+Table membership_types [headercolor: #7D5BA6] {
+  id            bigserial    [pk]
+  code          varchar(32)  [not null, unique]
+  title         varchar(128) [not null]
+  visits_total  int          [null, note: 'NULL означает безлимит. Ноль означал бы ноль посещений']
+  duration_days int          [not null]
+}
+
+Table membership_prices [headercolor: #7D5BA6] {
+  id                 bigserial     [pk]
+  membership_type_id bigint        [not null]
+  amount             decimal(12,2) [not null]
+  valid_from         date          [not null]
+  valid_to           date          [null, note: 'NULL = цена действует сейчас']
+
+  indexes { (membership_type_id, valid_from) [unique] }
+  Note: 'История цен. Прайс меняется, прошлые значения сохраняются'
+}
+
+Table memberships [headercolor: #7D5BA6] {
+  id                 bigserial        [pk]
+  client_id          bigint           [not null]
+  membership_type_id bigint           [not null]
+  price_paid         decimal(12,2)    [not null, note: 'осознанное дублирование: фиксирует условия сделки']
+  visits_left        int              [null]
+  state              membership_state [not null, default: 'ACTIVE']
+  starts_on          date             [not null]
+  ends_on            date             [not null]
+
+  indexes { (client_id, state)  (ends_on) }
+}
+
+Table payments [headercolor: #7D5BA6] {
+  id            bigserial      [pk]
+  client_id     bigint         [not null]
+  membership_id bigint         [null, note: 'NULL: платёж бывает не только за абонемент']
+  amount        decimal(12,2)  [not null]
+  currency      char(3)        [not null, default: 'RUB']
+  status        payment_status [not null, default: 'PENDING']
+  external_id   varchar(128)   [null, unique, note: 'идентификатор в шлюзе, защищает от двойной обработки']
+  created_at    timestamptz    [not null, default: `now()`]
+  paid_at       timestamptz    [null]
+
+  indexes { (client_id, created_at)  (status) }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  УВЕДОМЛЕНИЯ — оранжевый
+// ══════════════════════════════════════════════════════════════════
+
+Table notifications [headercolor: #E08A1E] {
+  id         bigserial   [pk]
+  client_id  bigint      [not null]
+  channel    varchar(16) [not null, note: 'EMAIL, SMS или PUSH']
+  template   varchar(64) [not null]
+  payload    jsonb       [not null]
+  created_at timestamptz [not null, default: `now()`]
+  sent_at    timestamptz [null, note: 'NULL = ещё в очереди']
+  attempts   int         [not null, default: 0]
+
+  indexes { (sent_at) }
+  Note: 'Очередь. Сайт создаёт письма быстрее, чем шлюз их отправляет'
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  СВЯЗИ
+// ══════════════════════════════════════════════════════════════════
+
+Ref: clients.referred_by > clients.id                           [delete: set null]
+Ref: client_cards.client_id - clients.id                        [delete: cascade]
+Ref: trainer_specialities.trainer_id > trainers.id              [delete: cascade]
+Ref: trainer_specialities.speciality_id > specialities.id       [delete: restrict]
+Ref: sessions.trainer_id > trainers.id                          [delete: restrict]
+Ref: sessions.hall_id > halls.id                                [delete: restrict]
+Ref: bookings.client_id > clients.id                            [delete: restrict]
+Ref: bookings.session_id > sessions.id                          [delete: restrict]
+Ref: booking_status_history.booking_id > bookings.id            [delete: cascade]
+Ref: booking_status_history.changed_by > clients.id             [delete: set null]
+Ref: membership_prices.membership_type_id > membership_types.id [delete: restrict]
+Ref: memberships.client_id > clients.id                         [delete: restrict]
+Ref: memberships.membership_type_id > membership_types.id       [delete: restrict]
+Ref: payments.client_id > clients.id                            [delete: restrict]
+Ref: payments.membership_id > memberships.id                    [delete: set null]
+Ref: notifications.client_id > clients.id                       [delete: cascade]
+
+TableGroup people   { clients client_cards trainers specialities trainer_specialities }
+TableGroup schedule { halls sessions bookings booking_status_history }
+TableGroup money    { membership_types membership_prices memberships payments }
+TableGroup messaging{ notifications }
